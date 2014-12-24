@@ -6,5 +6,5 @@ A Java implementation of the Rapid Automatic Keyword Extraction (RAKE) algorithm
 The source code is released under the MIT License.
 
 #Reference
-[Python RAKE](https://github.com/zhangdanyangg/RAKE)
+[Python RAKE](https://github.com/zhangdanyangg/RAKE)  
 [Java RAKE](https://github.com/Neuw84/RAKE-Java)

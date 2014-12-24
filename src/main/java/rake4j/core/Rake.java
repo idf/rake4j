@@ -1,4 +1,5 @@
 package rake4j.core;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rake4j.core.model.AbstractAlgorithm;
@@ -41,12 +42,12 @@ import static java.util.stream.Collectors.toList;
 
 public class Rake extends AbstractAlgorithm {
     private transient Document doc = null;
-    private final transient List<Term> termList; 
+    private final transient List<Term> termList;
     private List<String> stopWordList;
     transient private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private List<Pattern> regexList = null;
     private List<String> punctList;
-    private int minNumberOfletters = 2;
+    private int minNumberLetters = 1;
     
     public Rake() {
         super(true, "RAKE");
@@ -57,7 +58,7 @@ public class Rake extends AbstractAlgorithm {
     }
 
     @Override
-    public void init(Document pDoc, String pPropsDir) {
+    public void loadDocument(Document pDoc, String pPropsDir) {
         this.setDocument(pDoc);
         doc = pDoc;
     }
@@ -77,7 +78,7 @@ public class Rake extends AbstractAlgorithm {
         try {
             List<String> lines = Files.readAllLines(Paths.get(pLoc), StandardCharsets.UTF_8);
             for (String line : lines) {
-                line.trim();
+                line = line.trim();
                 if(line.charAt(0)!='#') {
                     for(String word: line.split("\\s+"))
                         stops.add(word);
@@ -98,6 +99,23 @@ public class Rake extends AbstractAlgorithm {
         String pattern = sb.substring(0, sb.length() - 1);
         Pattern pat = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
         return pat;
+    }
+    
+    private List<String> separateToWords(String text, int minWordReturnSize) {
+        String splitter = "[^a-zA-Z0-9_\\+\\-/]";
+        List<String> words = new ArrayList<>();
+        for(String word: text.split(splitter)) {
+            word = word.trim().toLowerCase();
+            if(word.length()>=minWordReturnSize && !word.equals("") && !isNumber(word)) {
+                words.add(word);
+            }
+        }
+        return words;
+    }
+    
+    private List<String> splitToSentences(String text) {
+        String splitter = "[.!?,;L\\t\\-\"\'\\(\\)\\\\]";
+        return Arrays.asList(text.split(splitter));
     }
 
     /**
@@ -127,7 +145,8 @@ public class Rake extends AbstractAlgorithm {
      * This method works better with a list of punctuation stop list, for
      * example for english, spanish and in general in latin based languages the
      * list could be (.,/{}[];:)
-     *
+     * 
+     * Notice: the escapes are automatically added
      * @param pLoc - the location of the file where the stopwords are
      */
     public void loadPunctStopWord(String pLoc) {
@@ -135,19 +154,18 @@ public class Rake extends AbstractAlgorithm {
         try {
             List<String> lines = Files.readAllLines(Paths.get(pLoc), StandardCharsets.UTF_8);
             for (String line : lines) {
-                line.trim();
+                line = line.trim();
                 if(line.charAt(0)!='#') {
-                    for(String word: line.split("\\s+"))
-                        stops.add(word);
+                   stops.add(line);
                 }
             }
             this.loadPunctStopWord(stops);
-        } catch (IOException ex) {
-            logger.error("Error loading RAKE punctList from: " + pLoc, ex);
+        } catch (IOException e) {
+            logger.error("Error loading RAKE punctList from: " + pLoc, e);
         }
     }
 
-    private Pattern buildPunctStopWord(List<String> pPunctStop) {
+    private Pattern buildPunctStopWordRegex(List<String> pPunctStop) {
         StringBuilder sb = new StringBuilder();
         for (String string : pPunctStop) {
             sb.append("\\").append(string.trim()).append("|");
@@ -172,101 +190,103 @@ public class Rake extends AbstractAlgorithm {
                 }
                 sb = new StringBuffer();
             }
-            List<String> cands = Arrays.asList(s.split("\\|"));
-            for (String string1 : cands) {
-                if (string1.trim().length() > 0) {
-                    String[] p = string1.trim().split("\\s+");
-                    if (string1.length() > 2 && p.length > 1 && !isNumber(string1)) {
-                        phraseList.add(string1.trim());
-                    }
+            
+            List<String> phrases = Arrays.asList(s.split("\\|"));
+            for (String phrase : phrases) {
+                if (phrase.trim().length() > 0) {
+                    if(phrase.length()>0)
+                        phraseList.add(phrase.trim());
                 }
             }
         }
         return phraseList;
     }
-    
-    
-    
-    
-    @Override
-    public void run() {
+
+    private Map<String, Float> calculateWordScores(List<String> phraseList) {
+        Map<String, Integer> wordFrequency = new HashMap<>();
+        Map<String, Integer> wordDegree = new HashMap<>();
+        
+        for (String phrase : phraseList) {
+            List<String> wordlist = separateToWords(phrase, minNumberLetters);
+            int wordlistlength = wordlist.size();
+            int wordlistdegree = wordlistlength-1;
+            for (String word : wordlist) {
+                if (wordFrequency.containsKey(word)==false) {
+                    wordFrequency.put(word, 1);
+                } else {
+                    int freq = wordFrequency.get(word)+1;
+                    wordFrequency.put(word, freq);
+                }
+
+                
+                if (wordDegree.containsKey(word)==false) {
+                    wordDegree.put(word, wordlistdegree);
+                } else {
+                    int deg = wordDegree.get(word)+wordlistdegree;
+                    wordDegree.put(word, deg);
+                }
+            }
+        }
+        for (Map.Entry<String, Integer> entry : wordDegree.entrySet()) {
+            entry.setValue(entry.getValue() + wordFrequency.get(entry.getKey()));
+        }
+
+        Map<String, Float> wordScore = new HashMap<>();
+        for (Map.Entry<String, Integer> entry : wordFrequency.entrySet()) {
+            wordScore.put(entry.getKey(), wordDegree.get(entry.getKey()) / (wordFrequency.get(entry.getKey()) * 1.0f));
+        }
+        return wordScore;
+    }
+
+    private List<Term> generateCandidateKeywordScores(List<String> phraseList, Map<String, Float> wordScore) {
+        List<Term> termList = new ArrayList<>();
+        for (String phrase : phraseList) {
+            List<String> words = separateToWords(phrase, minNumberLetters);
+            float score = 0.0f;
+            for (String word : words) {
+                score += wordScore.get(word);
+            }
+            termList.add(new Term(phrase, score));
+        }
+        return termList;
+    }
+
+    /**
+     * called after loading, just before run
+     */
+    public void init() {
         if (stopWordList.isEmpty()) {
             logger.error("The method " + this.getName() + " requires a StopWordList to build the candidate list");
             return;
         }
-        
-        Map<String, Integer> wordfreq = new HashMap<>();
-        Map<String, Integer> worddegree = new HashMap<>();
-        Map<String, Float> wordscore = new HashMap<>();
+
         Pattern pat = buildStopWordRegex(stopWordList);
         regexList.add(pat);
         if (!punctList.isEmpty()) {
-            Pattern pat2 = buildPunctStopWord(punctList);
+            Pattern pat2 = buildPunctStopWordRegex(punctList);
             regexList.add(pat2);
         }
-        List<String> candidates = generateCandidateKeywords(doc.getSentenceList(), regexList);
-        for (String phrase : candidates) {
-            String[] wordlist = phrase.split("\\s+");
-            int wordlistlength = wordlist.length;
-            int wordlistdegree = wordlistlength - 1;
-            for (String word : wordlist) {
-                int freq;
-                if (wordfreq.containsKey(word)==false) {
-                    wordfreq.put(word, 1);
-                } else {
-                    freq = wordfreq.get(word) + 1;
-                    wordfreq.remove(word);
-                    wordfreq.put(word, freq);
-                }
-
-                if (worddegree.containsKey(word)==false) {
-                    worddegree.put(word, wordlistdegree);
-                } else {
-                    int deg = worddegree.get(word) + wordlistdegree;
-                    worddegree.remove(word);
-                    worddegree.put(word, deg);
-                }
-            }
-        }
-        for (Map.Entry<String, Integer> entry : worddegree.entrySet()) {
-            entry.setValue(entry.getValue() + wordfreq.get(entry.getKey()));
-        }
-        List<Term> termLi = new ArrayList<>();
-        for (Map.Entry<String, Integer> entry : wordfreq.entrySet()) {
-            wordscore.put(entry.getKey(), worddegree.get(entry.getKey()) / (wordfreq.get(entry.getKey()) * 1.0f));
-        }
-        for (String phrase : candidates) {
-            String[] words = phrase.split("\\s+");
-            float score = 0.0f;
-            for (String word : words) {
-                score += wordscore.get(word);
-            }
-            termLi.add(new Term(phrase, score));
-        }
-        Comparator<? super Term> sorter = (o1, o2) -> o1.getScore() > o2.getScore() ? -1 : o1.getScore() == o2.getScore() ? 0 : 1;
-        List<Term> orderedList = termLi.parallelStream().sorted(sorter).distinct().collect(toList());
-        doc.setTermList(orderedList);
-    
     }
 
-    /**
-     *
-     * Returns the current (Default 2)
-     *
-     * @return the minNumberOfletters required to a word to be included
-     */
-    public int getMinNumberOfletters() {
-        return minNumberOfletters;
+    @Override
+    public void run() {
+        List<String> sentenceList = doc.getSentenceList();
+        List<String> phraseList = generateCandidateKeywords(sentenceList, regexList);
+        Map<String, Float> wordScore = calculateWordScores(phraseList);
+        List<Term> keywordCandidates = generateCandidateKeywordScores(phraseList, wordScore);
+        Comparator<? super Term> cmp = (o1, o2) -> o1.getScore() > o2.getScore() ? -1 : o1.getScore() == o2.getScore() ? 0 : 1;
+        List<Term> sortedKeywords = keywordCandidates.parallelStream().sorted(cmp).distinct().collect(toList());
+        doc.setTermList(sortedKeywords);
+
     }
 
-    /**
-     * Default 2
-     *
-     * @param minNumberOfletters the minNumberOfletters to set to a word to be
-     * included
-     */
-    public void setMinNumberOfletters(int minNumberOfletters) {
-        this.minNumberOfletters = minNumberOfletters;
+
+    public int getMinNumberLetters() {
+        return minNumberLetters;
+    }
+
+    public void setMinNumberLetters(int minNumberLetters) {
+        this.minNumberLetters = minNumberLetters;
     }
 
     /**

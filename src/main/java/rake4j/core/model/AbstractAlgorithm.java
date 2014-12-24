@@ -297,8 +297,8 @@ public abstract class AbstractAlgorithm implements Callable<Integer> {
         Gson son = new Gson();
         return son.toJson(this);
     }
-    
-    
+
+
     public void sort(Comparator<Term> comparator){
        termList= this.getTermList().stream().sorted(comparator).collect(Collectors.toList());
     }
@@ -373,7 +373,7 @@ public abstract class AbstractAlgorithm implements Callable<Integer> {
      * @param pDoc
      * @param pPropsDir
      */
-    public abstract void init(Document pDoc, String pPropsDir);
+    public abstract void loadDocument(Document pDoc, String pPropsDir);
 
     public void setProperties(Properties pProps) {
         properties=pProps;
