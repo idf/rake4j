@@ -208,7 +208,7 @@ public abstract class AbstractAlgorithm implements Callable<Integer> {
      * The class that represents the action of running an algorithm in a corpus
      * must be implemented
      */
-    public abstract void runAlgorithm();
+    public abstract void run();
 
     /**
      * This will be used by the ThreadPool to execute the algorithm and return
@@ -219,7 +219,7 @@ public abstract class AbstractAlgorithm implements Callable<Integer> {
      */
     @Override
     public final Integer call() throws Exception {
-        runAlgorithm();
+        run();
         return new Integer(0);
     }
 
