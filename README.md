@@ -5,6 +5,16 @@ A Java implementation of the Rapid Automatic Keyword Extraction (RAKE) algorithm
 
 The source code is released under the MIT License.
 
+#Run
+##Minimal
+```java
+        Document doc = new Document(text);
+        Rake rake = new Rake();
+        rake.loadDocument(doc);
+        rake.run();
+        System.out.println(doc.termListToString());
+```
+
 #Reference
 [Python RAKE](https://github.com/zhangdanyangg/RAKE)  
 [Java RAKE](https://github.com/Neuw84/RAKE-Java)
