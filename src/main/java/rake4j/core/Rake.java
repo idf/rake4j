@@ -18,30 +18,6 @@ import java.util.regex.Pattern;
 
 import static java.util.stream.Collectors.toList;
 
-/**
- *
- * An Implementation of the RAKE (Rapid Automatic Keyword Extraction)
- * <i> Rose, Stuart, et al. "Automatic keyword extraction from individual
- * documents." Text Mining (2010): 1-20.
- * </i>
- *
- * This implementation is based on JATE https://code.google.com/p/jatetoolkit/
- * and on https://github.com/aneesha/RAKE, it gives similar results as the
- * python script provided a good stopword list with a punctuation list
- *
- * The numbers have been taken into account using JATE method. The algorithm
- * expects that the puntuaction marks are separated within a whitespace. 
- * " The red table , that is in front of you , is mine . "
- * To achieve this you should use a parser like OpenNLP, Illinois POS Tagger, 
- * Freeling parsers etc.
- * 
- * 
- * TODO: use POS tags to avoid verbs and other unwanted type of words in the 
- * process of keyword generation
- * 
- * @author Angel Conde Manjon
- */
-
 public class Rake extends AbstractAlgorithm {
     private transient Document doc = null;
     private List<String> stopWordList = new ArrayList<>();
