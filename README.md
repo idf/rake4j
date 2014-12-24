@@ -15,6 +15,6 @@ The source code is released under the MIT License.
         System.out.println(doc.termListToString());
 ```
 
-#Reference
+#References
 [Python RAKE](https://github.com/zhangdanyangg/RAKE)  
 [Java RAKE](https://github.com/Neuw84/RAKE-Java)
