@@ -39,51 +39,14 @@ import java.util.List;
  * @author Angel Conde Manjon
  */
 public class Document {
-
+    private transient String text;
     private transient String path;
-    private transient List<String> sentenceList;
     private transient List<LinkedList<Token>> tokenList;
-    private String name;
-    private transient List<Term> termList;
+    private transient List<Term> termList = new ArrayList<>();
     private transient static final Logger logger = LoggerFactory.getLogger(Document.class);
 
-    /**
-     *
-     * @param pPath
-     * @param pName
-     */
-    public Document(String pPath, String pName) {
-        path = pPath;
-        name = pName;
-        termList = new ArrayList<>();
-    }
-
-    /**
-     * @return the path
-     */
-    public String getPath() {
-        return path;
-    }
-
-    /**
-     * @param path the path to set
-     */
-    public void setPath(String path) {
-        this.path = path;
-    }
-
-    /**
-     * @return the sentenceList
-     */
-    public List<String> getSentenceList() {
-        return sentenceList;
-    }
-
-    /**
-     * @param sentenceList the sentenceList to set
-     */
-    public void setSentenceList(List<String> sentenceList) {
-        this.sentenceList = sentenceList;
+    public Document(String text) {
+        this.text = text;
     }
 
     /**
@@ -98,20 +61,6 @@ public class Document {
      */
     public void List(List<LinkedList<Token>> tokenList) {
         this.tokenList = tokenList;
-    }
-
-    /**
-     * @return the name
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * @param name the name to set
-     */
-    public void setName(String name) {
-        this.name = name;
     }
 
     /**
@@ -163,11 +112,18 @@ public class Document {
 
     }
 
-    /**
-     * @param termList the termList to set
-     */
+    public String termListToString() {
+        StringBuffer sb = new StringBuffer();
+        for(Term t: termList) {
+            sb.append(t.toString()+"\n");
+        }
+        return sb.toString();
+    }
     public void setTermList(List<Term> termList) {
         this.termList = termList;
     }
 
+    public String getText() {
+        return text;
+    }
 }

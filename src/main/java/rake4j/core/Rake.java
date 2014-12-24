@@ -7,6 +7,8 @@ import rake4j.core.model.Document;
 import rake4j.core.model.Term;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -42,25 +44,19 @@ import static java.util.stream.Collectors.toList;
 
 public class Rake extends AbstractAlgorithm {
     private transient Document doc = null;
-    private final transient List<Term> termList;
-    private List<String> stopWordList;
+    private List<String> stopWordList = new ArrayList<>();
     transient private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    private List<Pattern> regexList = null;
-    private List<String> punctList;
+    private List<Pattern> regexList = new ArrayList<>();
+    private List<String> punctList = new ArrayList<>();
     private int minNumberLetters = 1;
     
-    public Rake() {
+    public Rake() throws URISyntaxException {
         super(true, "RAKE");
-        termList = super.getTermList();
-        stopWordList = new ArrayList<>();
-        regexList = new ArrayList<>();
-        punctList = new ArrayList<>();
+        this.init();
     }
-
-    @Override
-    public void loadDocument(Document pDoc, String pPropsDir) {
-        this.setDocument(pDoc);
-        doc = pDoc;
+    
+    public void loadDocument(Document doc) {
+        this.doc = doc;
     }
 
     /**
@@ -73,7 +69,7 @@ public class Rake extends AbstractAlgorithm {
     /**
      * @param pLoc - the location of the file where the stopwords are
      */
-    public void loadStopWords(String pLoc) {
+    public void loadStopWords(URI pLoc) {
         List<String> stops = new ArrayList<>();
         try {
             List<String> lines = Files.readAllLines(Paths.get(pLoc), StandardCharsets.UTF_8);
@@ -114,7 +110,7 @@ public class Rake extends AbstractAlgorithm {
     }
     
     private List<String> splitToSentences(String text) {
-        String splitter = "[.!?,;L\\t\\-\"\'\\(\\)\\\\]";
+        String splitter = "[.!?,;\\t\\-\"\'\\(\\)\\\\]";
         return Arrays.asList(text.split(splitter));
     }
 
@@ -149,7 +145,7 @@ public class Rake extends AbstractAlgorithm {
      * Notice: the escapes are automatically added
      * @param pLoc - the location of the file where the stopwords are
      */
-    public void loadPunctStopWord(String pLoc) {
+    public void loadPunctStopWord(URI pLoc) {
         List<String> stops = new ArrayList<>();
         try {
             List<String> lines = Files.readAllLines(Paths.get(pLoc), StandardCharsets.UTF_8);
@@ -254,14 +250,16 @@ public class Rake extends AbstractAlgorithm {
     /**
      * called after loading, just before run
      */
-    public void init() {
+    public void init() throws URISyntaxException {
+        this.loadStopWords(this.getClass().getResource("/SmartStopListEn.txt").toURI());
+        
         if (stopWordList.isEmpty()) {
             logger.error("The method " + this.getName() + " requires a StopWordList to build the candidate list");
             return;
         }
-
         Pattern pat = buildStopWordRegex(stopWordList);
         regexList.add(pat);
+        
         if (!punctList.isEmpty()) {
             Pattern pat2 = buildPunctStopWordRegex(punctList);
             regexList.add(pat2);
@@ -270,23 +268,13 @@ public class Rake extends AbstractAlgorithm {
 
     @Override
     public void run() {
-        List<String> sentenceList = doc.getSentenceList();
+        List<String> sentenceList = splitToSentences(doc.getText());
         List<String> phraseList = generateCandidateKeywords(sentenceList, regexList);
         Map<String, Float> wordScore = calculateWordScores(phraseList);
         List<Term> keywordCandidates = generateCandidateKeywordScores(phraseList, wordScore);
         Comparator<? super Term> cmp = (o1, o2) -> o1.getScore() > o2.getScore() ? -1 : o1.getScore() == o2.getScore() ? 0 : 1;
         List<Term> sortedKeywords = keywordCandidates.parallelStream().sorted(cmp).distinct().collect(toList());
         doc.setTermList(sortedKeywords);
-
-    }
-
-
-    public int getMinNumberLetters() {
-        return minNumberLetters;
-    }
-
-    public void setMinNumberLetters(int minNumberLetters) {
-        this.minNumberLetters = minNumberLetters;
     }
 
     /**
@@ -302,5 +290,13 @@ public class Rake extends AbstractAlgorithm {
             return false;
         }
         return true;
+    }
+    
+    public int getMinNumberLetters() {
+        return minNumberLetters;
+    }
+
+    public void setMinNumberLetters(int minNumberLetters) {
+        this.minNumberLetters = minNumberLetters;
     }
 }

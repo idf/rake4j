@@ -365,16 +365,6 @@ public abstract class AbstractAlgorithm implements Callable<Integer> {
         this.name = name;
     }
 
-    /**
-     * Method for class initialization, initializes the document that will
-     * be processed for the given algorithm, and the directory where the program
-     * is executed (standalone vs web server differences...)
-     *
-     * @param pDoc
-     * @param pPropsDir
-     */
-    public abstract void loadDocument(Document pDoc, String pPropsDir);
-
     public void setProperties(Properties pProps) {
         properties=pProps;
     }
