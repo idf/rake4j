@@ -4,6 +4,8 @@ import junit.framework.TestCase;
 import rake4j.core.model.Document;
 
 import java.net.URISyntaxException;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * Unit test for simple App.
@@ -42,8 +44,29 @@ public class RakeTest extends TestCase {
         Document doc = new Document(text);
         Rake rake = new Rake();
         rake.loadDocument(doc);
-        rake.run();
-        System.out.println(doc.termListToString());
+        rake.runWithoutOffset();
+        // System.out.println(doc.termListToString());
         assertEquals(actual, doc.termListToString());
+    }
+
+    public void testSplitSentences() throws URISyntaxException {
+        Rake rake = new Rake();
+        String text = "sentence 1....\n" +
+                "sentence sentence 2\n" +
+                "\n" +
+                "\n" +
+                "sentence 3";
+        Map<Integer, String> map = rake.splitToSentencesWithOffsets(text);
+
+        Iterator it = map.entrySet().iterator();
+        while(it.hasNext()) {
+            Map.Entry pair = (Map.Entry) it.next();
+            // System.out.println(pair.getKey()+": "+pair.getValue());
+        }
+
+        assert map.get(0).equals("sentence 1");
+        assert map.get(15).equals("sentence sentence 2");
+        assert map.get(37).equals("sentence 3");
+
     }
 }

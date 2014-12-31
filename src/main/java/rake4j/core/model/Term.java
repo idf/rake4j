@@ -20,6 +20,8 @@ package rake4j.core.model;
  */
 
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -35,12 +37,14 @@ public class Term {
 
     private String term;
     private float score;
+    private List<Integer> offsets = new ArrayList<>();
+
 
     /**
      *
      */
     public Term() {
-        
+
     }
 
     /**
@@ -114,5 +118,13 @@ public class Term {
         int hash = 7;
         hash = 97 * hash + Objects.hashCode(this.term);
         return hash;
+    }
+
+    public List<Integer> getOffsets() {
+        return offsets;
+    }
+
+    public void setOffsets(List<Integer> offsets) {
+        this.offsets = offsets;
     }
 }

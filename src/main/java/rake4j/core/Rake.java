@@ -85,9 +85,31 @@ public class Rake extends AbstractAlgorithm {
         return words;
     }
     
-    private List<String> splitToSentences(String text) {
-        String splitter = "[.!?,;\\t\\-\"\'\\(\\)\\\\]";
+    List<String> splitToSentences(String text) {
+        String splitter = "[\\.!?,;\\t\\-\"\'\\(\\)\\\\\\n]+";
         return Arrays.asList(text.split(splitter));
+    }
+
+    Map<Integer, String> splitToSentencesWithOffsets(String text) {
+        List<String> splitTexts = splitToSentences(text);
+        return getOffsetsOfSplitString(text, splitTexts, 0);
+    }
+
+    private Map<Integer, String> getOffsetsOfSplitString(String s, List<String> splitStrings, int initialOffset) {
+        List<Integer> offsets = new ArrayList<>();
+        int offset = -1;
+        for(String item: splitStrings) {
+            offset = s.indexOf(item, offset+1);
+            offsets.add(offset);
+        }
+        assert splitStrings.size()==offsets.size();
+
+        Map<Integer, String> offset2item = new HashMap<>();
+        for(int i=0; i<offsets.size(); i++) {
+            offset2item.put(offsets.get(i)+initialOffset, splitStrings.get(i));
+        }
+        assert offset2item.size()==offsets.size();
+        return offset2item;
     }
 
     /**
@@ -174,6 +196,40 @@ public class Rake extends AbstractAlgorithm {
         return phraseList;
     }
 
+    Map<Integer, String> generateCandidateKeywords(Map<Integer, String> sentenceList, List<Pattern> stopwordPattern) {
+        Map<Integer, String> phraseList = new HashMap<>();
+        StringBuffer sb = new StringBuffer();
+        Iterator itr = sentenceList.entrySet().iterator();
+        while(itr.hasNext()) {
+            Map.Entry entry = (Map.Entry) itr.next();
+            Integer initialOffset = (Integer) entry.getKey();
+            String s = (String) entry.getValue();
+
+            for (Pattern pat : stopwordPattern) {
+                Matcher matcher = pat.matcher(s.trim());
+                while (matcher.find()) {
+                    matcher.appendReplacement(sb, "|");
+                }
+                matcher.appendTail(sb);
+                if (sb.length() > 0) {
+                    s = sb.toString();
+                }
+                sb = new StringBuffer();
+            }
+
+            List<String> phrases = Arrays.asList(s.split("\\|"));
+            List<String> temp = new ArrayList<>();
+            for (String phrase : phrases) {
+                if (phrase.trim().length()>0) {
+                    temp.add(phrase.trim());
+                }
+            }
+            Map<Integer, String> subPhraseList = getOffsetsOfSplitString(s, temp, initialOffset);
+            phraseList.putAll(subPhraseList);
+        }
+        return phraseList;
+    }
+
     private Map<String, Float> calculateWordScores(List<String> phraseList) {
         Map<String, Integer> wordFrequency = new HashMap<>();
         Map<String, Integer> wordDegree = new HashMap<>();
@@ -223,6 +279,19 @@ public class Rake extends AbstractAlgorithm {
         return termList;
     }
 
+    private Map<Integer, Term> generateCandidateKeywordScores(Map<Integer, String> phraseList, Map<String, Float> wordScore) {
+        Map<Integer, Term> termList = new HashMap<>();
+        for (Map.Entry entry: phraseList.entrySet()) {
+            List<String> words = separateToWords((String) entry.getValue(), minNumberLetters);
+            float score = 0.0f;
+            for (String word : words) {
+                score += wordScore.get(word);
+            }
+            termList.put((Integer) entry.getValue(), new Term((String) entry.getValue(), score));
+        }
+        return termList;
+    }
+
     /**
      * called after loading, just before run
      */
@@ -242,8 +311,7 @@ public class Rake extends AbstractAlgorithm {
         }
     }
 
-    @Override
-    public void run() {
+    public void runWithoutOffset() {
         List<String> sentenceList = splitToSentences(doc.getText());
         List<String> phraseList = generateCandidateKeywords(sentenceList, regexList);
         Map<String, Float> wordScore = calculateWordScores(phraseList);
@@ -251,6 +319,15 @@ public class Rake extends AbstractAlgorithm {
         Comparator<? super Term> cmp = (o1, o2) -> o1.getScore() > o2.getScore() ? -1 : o1.getScore() == o2.getScore() ? 0 : 1;
         List<Term> sortedKeywords = keywordCandidates.parallelStream().sorted(cmp).distinct().collect(toList());
         doc.setTermList(sortedKeywords);
+    }
+
+    @Override
+    public void run() {
+        Map<Integer, String> sentenceList = splitToSentencesWithOffsets(doc.getText());
+        Map<Integer, String> phraseList = generateCandidateKeywords(sentenceList, regexList);
+        Map<String, Float> wordScore = calculateWordScores(new ArrayList<>(phraseList.values()));
+        Map<Integer, Term> keywordCandidates = generateCandidateKeywordScores(phraseList, wordScore);
+        // TODO
     }
 
     /**
