@@ -15,6 +15,21 @@ The source code is released under the MIT License.
         System.out.println(doc.termListToString());
 ```
 
+#Dependencies
+In pom.xml, another custom maven module dependency is required:
+```xml
+        <dependency>
+            <groupId>io.deepreader.java.commons</groupId>
+            <artifactId>commons-util</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+```
+You can get the module manually by:
+```
+git clone https://github.com/zhangdanyangg/commons-util
+```
+, which is hosted [here](https://github.com/zhangdanyangg/commons-util).
+
 #References
 [Python RAKE](https://github.com/zhangdanyangg/RAKE)  
 [Java RAKE](https://github.com/Neuw84/RAKE-Java)
