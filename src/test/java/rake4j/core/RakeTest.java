@@ -11,7 +11,7 @@ import java.util.Map;
  * Unit test for simple App.
  */
 public class RakeTest extends TestCase {
-    public void testApp() throws URISyntaxException {
+    public void testRunWithoutOffset() throws URISyntaxException {
         String text = "Compatibility of systems of linear constraints over the set of natural numbers. Criteria of compatibility of a system of linear Diophantine equations, strict inequations, and nonstrict inequations are considered. Upper bounds for components of a minimal set of solutions and algorithms of construction of minimal generating sets of solutions for all types of systems are given. These criteria and the corresponding algorithms for constructing a minimal supporting set of solutions can be used in solving all the considered types of systems and systems of mixed types.";
         String actual = "minimal generating sets\t8.666667\n" +
                 "linear Diophantine equations\t8.5\n" +
@@ -68,5 +68,16 @@ public class RakeTest extends TestCase {
         assert map.get(15).equals("sentence sentence 2");
         assert map.get(37).equals("sentence 3");
 
+    }
+
+    public void testRun() throws URISyntaxException {
+        String text = "Compatibility of systems of linear constraints over the set of natural numbers. Criteria of compatibility of a system of linear Diophantine equations, strict inequations, and nonstrict inequations are considered. Upper bounds for components of a minimal set of solutions and algorithms of construction of minimal generating sets of solutions for all types of systems are given. These criteria and the corresponding algorithms for constructing a minimal supporting set of solutions can be used in solving all the considered types of systems and systems of mixed types.";
+        String actual = "";
+        Document doc = new Document(text);
+        Rake rake = new Rake();
+        rake.loadDocument(doc);
+        rake.run();
+        System.out.println(doc.termMapToString());
+        // assertEquals(actual, doc.termListToString());
     }
 }

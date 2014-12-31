@@ -1,5 +1,6 @@
 package rake4j.core;
 
+import io.deepreader.java.commons.util.Sorter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rake4j.core.model.AbstractAlgorithm;
@@ -287,7 +288,7 @@ public class Rake extends AbstractAlgorithm {
             for (String word : words) {
                 score += wordScore.get(word);
             }
-            termList.put((Integer) entry.getValue(), new Term((String) entry.getValue(), score));
+            termList.put((Integer) entry.getKey(), new Term((String) entry.getValue(), score));
         }
         return termList;
     }
@@ -327,7 +328,18 @@ public class Rake extends AbstractAlgorithm {
         Map<Integer, String> phraseList = generateCandidateKeywords(sentenceList, regexList);
         Map<String, Float> wordScore = calculateWordScores(new ArrayList<>(phraseList.values()));
         Map<Integer, Term> keywordCandidates = generateCandidateKeywordScores(phraseList, wordScore);
-        // TODO
+        TreeMap<Integer, Term> sortedKeywords = Sorter.sortByValues(keywordCandidates, new Sorter.ValueComparator<Integer, Term>(keywordCandidates) {
+            @Override
+            public int compare(Integer a, Integer b) {
+                if (base.get(a).getScore()<base.get(b).getScore()) {
+                    return 1;
+                } else {
+                    return -1;
+                }
+            }
+        });
+        doc.setTermMap(sortedKeywords);
+        // TODO top k keywords 
     }
 
     /**

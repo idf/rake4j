@@ -29,9 +29,7 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * A document represents the piece of a corpus containing text.
@@ -39,38 +37,17 @@ import java.util.List;
  * @author Angel Conde Manjon
  */
 public class Document {
-    private transient String text;
-    private transient String path;
-    private transient List<LinkedList<Token>> tokenList;
-    private transient List<Term> termList = new ArrayList<>();
-    private transient static final Logger logger = LoggerFactory.getLogger(Document.class);
+    private String text;
+    private String path;
+    private List<LinkedList<Token>> tokenList;
+    private List<Term> termList = new ArrayList<>();
+    private TreeMap<Integer, Term> termMap = new TreeMap<>();
+    private static final Logger logger = LoggerFactory.getLogger(Document.class);
 
     public Document(String text) {
         this.text = text;
     }
-
-    /**
-     * @return the tokenList
-     */
-    public List<LinkedList<Token>> getTokenList() {
-        return tokenList;
-    }
-
-    /**
-     * @param tokenList the tokenList to set
-     */
-    public void List(List<LinkedList<Token>> tokenList) {
-        this.tokenList = tokenList;
-    }
-
-    /**
-     *
-     * @return
-     */
-    public List<Term> getTermList() {
-        return termList;
-    }
-
+    
     /**
      * Tries to convert the content of this document to UTF-8 using java
      * CharsetDecoders
@@ -119,11 +96,41 @@ public class Document {
         }
         return sb.toString();
     }
-    public void setTermList(List<Term> termList) {
-        this.termList = termList;
+
+    public String termMapToString() {
+        StringBuffer sb = new StringBuffer();
+        for(Map.Entry entry: termMap.entrySet()) {
+            sb.append(entry.getKey()+": ");
+            sb.append(entry.getValue().toString()+"\n");
+        }
+        return sb.toString();
     }
 
     public String getText() {
         return text;
+    }
+
+    public List<LinkedList<Token>> getTokenList() {
+        return tokenList;
+    }
+
+    public void List(List<LinkedList<Token>> tokenList) {
+        this.tokenList = tokenList;
+    }
+
+    public TreeMap<Integer, Term> getTermMap() {
+        return termMap;
+    }
+
+    public void setTermMap(TreeMap<Integer, Term> termMap) {
+        this.termMap = termMap;
+    }
+    
+    public List<Term> getTermList() {
+        return termList;
+    }
+    
+    public void setTermList(List<Term> termList) {
+        this.termList = termList;
     }
 }
