@@ -339,7 +339,7 @@ public class Rake extends AbstractAlgorithm {
             }
         });
         doc.setTermMap(sortedKeywords);
-        // TODO top k keywords 
+        // TODO top k keywords
     }
 
     /**
