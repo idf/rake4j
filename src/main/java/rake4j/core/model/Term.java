@@ -25,17 +25,17 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * A term represents a candidate of the term extraction methods, it's need that it will
+ * A termText represents a candidate of the termText extraction methods, it's need that it will
  * pass a validation with a knowledge base before knowing if it is a topic
- * A term contains an String with the term's text and a score if the algorithm
- * used for extracting the term has one. (if not the score must be -1)
+ * A termText contains an String with the termText's text and a score if the algorithm
+ * used for extracting the termText has one. (if not the score must be -1)
  *
  * @author Angel Conde Manjon
  */
 
 public class Term {
 
-    private String term;
+    private String termText;
     private float score;
     private List<Integer> offsets = new ArrayList<>();
 
@@ -54,7 +54,7 @@ public class Term {
     
         
     public Term(String pTerm) {
-        term = pTerm;
+        termText = pTerm;
         score = -1;
 
     }
@@ -65,22 +65,22 @@ public class Term {
      * @param pScore
      */
     public Term(String pTerm, float pScore) {
-        term = pTerm;
+        termText = pTerm;
         score = pScore;
     }
 
     /**
      * @return the extracted termterm
      */
-    public String getTerm() {
-        return term;
+    public String getTermText() {
+        return termText;
     }
 
     /**
-     * @param term the term to set
+     * @param termText the termText to set
      */
-    public void setTerm(String term) {
-        this.term = term;
+    public void setTermText(String termText) {
+        this.termText = termText;
     }
 
     /**
@@ -99,14 +99,14 @@ public class Term {
 
     @Override
     public String toString() {
-        return term + "\t" + score;
+        return termText + "\t" + score;
     }
 
    
     @Override
     public boolean equals(Object pObject) {
         if (pObject instanceof Term) {
-            return this.term.equalsIgnoreCase(((Term) pObject).getTerm());
+            return this.termText.equalsIgnoreCase(((Term) pObject).getTermText());
         } else {
             return false;
 
@@ -116,7 +116,7 @@ public class Term {
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 97 * hash + Objects.hashCode(this.term);
+        hash = 97 * hash + Objects.hashCode(this.termText);
         return hash;
     }
 

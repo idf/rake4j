@@ -9,7 +9,7 @@ An implementation of the Rapid Automatic Keyword Extraction (RAKE) algorithm as 
 Normal run 
 ```java
         Document doc = new Document(text);
-        Rake rake = new Rake();
+        RakeAnalyzer rake = new RakeAnalyzer();
         rake.loadDocument(doc);
         rake.runWithoutOffset();
         System.out.println(doc.termListToString());
@@ -17,7 +17,7 @@ Normal run
 Run with offset information 
 ```java
         Document doc = new Document(text);
-        Rake rake = new Rake();
+        RakeAnalyzer rake = new RakeAnalyzer();
         rake.loadDocument(doc);
         rake.run();
         System.out.println(doc.termMapToString());

@@ -20,7 +20,7 @@ import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
 /*
- *    AbstractAlgorithm.java
+ *    Analyzer.java
  *    Copyright (C) 2013 Angel Conde, neuw84 at gmail dot com
  *
  *    This program is free software; you can redistribute it and/or modify
@@ -44,24 +44,24 @@ import java.util.stream.Collectors;
  *
  * @author Angel Conde Manjon
  */
-public abstract class AbstractAlgorithm implements Callable<Integer> {
+public abstract class Analyzer implements Callable<Integer> {
     
     //TODO if we process a corpus instead a document, the termList in each 
     //document is unusable, thing about the model and refactor
     
     private List<Term> termList;
     private boolean scored;
-    private transient Document doc;
+    protected Document doc;
     private String name;
     private transient Properties properties = null;
-    transient final Logger logger = LoggerFactory.getLogger(AbstractAlgorithm.class);
+    transient final Logger logger = LoggerFactory.getLogger(Analyzer.class);
 
     /**
      *
      * @param pScored - if the results of the algorithm will be scored
      * @param pName - The name of the algorithm
      */
-    public AbstractAlgorithm(boolean pScored, String pName) {
+    public Analyzer(boolean pScored, String pName) {
         termList = new ArrayList<>();
         scored = pScored;
         name = pName;
@@ -105,7 +105,7 @@ public abstract class AbstractAlgorithm implements Callable<Integer> {
         boolean stop;
         if (getTermList().size() > 0) {
             for (Term term : getTermList()) {
-                String[] nGrams = term.getTerm().split("\\s");
+                String[] nGrams = term.getTermText().split("\\s");
                 stop = false;
                 for (String string : pStopwordList) {
                     if (nGrams.length == 1) {
@@ -145,7 +145,7 @@ public abstract class AbstractAlgorithm implements Callable<Integer> {
             for (String string : pFirstTermStopWordList) {
                 for (Term term : getTermList()) {
                     stop = false;
-                    String[] nGrams = term.getTerm().split("\\s");
+                    String[] nGrams = term.getTermText().split("\\s");
                     if (nGrams[0].equalsIgnoreCase(string)) {
                         stop = true;
                     }
@@ -173,7 +173,7 @@ public abstract class AbstractAlgorithm implements Callable<Integer> {
             for (String string : pFirstTermStopWordList) {
                 for (Term term : getTermList()) {
                     stop = false;
-                    String[] nGrams = term.getTerm().split("\\s");
+                    String[] nGrams = term.getTermText().split("\\s");
                     if (nGrams[nGrams.length - 1].equalsIgnoreCase(string)) {
                         stop = true;
                     }
@@ -195,13 +195,17 @@ public abstract class AbstractAlgorithm implements Callable<Integer> {
     public final void print() {
         if (isScored()) {
             getTermList().stream().forEach((scoredTerm) -> {
-                System.out.printf("%s \t %f", scoredTerm.getTerm(), scoredTerm.getScore());
+                System.out.printf("%s \t %f", scoredTerm.getTermText(), scoredTerm.getScore());
             });
         } else {
             getTermList().stream().forEach((scoredTerm) -> {
-                System.out.printf("%s \t %f", scoredTerm.getTerm());
+                System.out.printf("%s \t %f", scoredTerm.getTermText());
             });
         }
+    }
+
+    public void loadDocument(Document doc) {
+        this.doc = doc;
     }
 
     /**
@@ -282,7 +286,7 @@ public abstract class AbstractAlgorithm implements Callable<Integer> {
                 }
             }
         } catch (IOException ex) {
-            logger.warn(AbstractAlgorithm.class.getName(), "couldn't save the algorithm results to temp directory", ex);
+            logger.warn(Analyzer.class.getName(), "couldn't save the algorithm results to temp directory", ex);
         }
     }
 
@@ -315,7 +319,7 @@ public abstract class AbstractAlgorithm implements Callable<Integer> {
                 out.print(son.toJson(this));
             }
         } catch (IOException ex) {
-            logger.warn(AbstractAlgorithm.class.getName(), "couldn't save the algorithm results to temp directory in json format", ex);
+            logger.warn(Analyzer.class.getName(), "couldn't save the algorithm results to temp directory in json format", ex);
         }
     }
 
@@ -343,9 +347,9 @@ public abstract class AbstractAlgorithm implements Callable<Integer> {
             }
             return list;
         } catch (IOException ex) {
-            logger.error(AbstractAlgorithm.class.getName(), "error while reading algorithm results", ex);
+            logger.error(Analyzer.class.getName(), "error while reading algorithm results", ex);
         } catch (NullPointerException ex1){
-            logger.error(AbstractAlgorithm.class.getName(), "The file is not in the required format", ex1);
+            logger.error(Analyzer.class.getName(), "The file is not in the required format", ex1);
         }
         return null;
 

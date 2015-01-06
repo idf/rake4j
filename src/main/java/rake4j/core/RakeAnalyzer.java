@@ -3,8 +3,7 @@ package rake4j.core;
 import io.deepreader.java.commons.util.Sorter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import rake4j.core.model.AbstractAlgorithm;
-import rake4j.core.model.Document;
+import rake4j.core.model.Analyzer;
 import rake4j.core.model.Term;
 
 import java.io.IOException;
@@ -19,21 +18,16 @@ import java.util.regex.Pattern;
 
 import static java.util.stream.Collectors.toList;
 
-public class Rake extends AbstractAlgorithm {
-    private transient Document doc = null;
+public class RakeAnalyzer extends Analyzer {
     private List<String> stopWordList = new ArrayList<>();
     transient private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private List<Pattern> regexList = new ArrayList<>();
     private List<String> punctList = new ArrayList<>();
     private int minNumberLetters = 1;
     
-    public Rake() throws URISyntaxException {
+    public RakeAnalyzer() throws URISyntaxException {
         super(true, "RAKE");
         this.init();
-    }
-    
-    public void loadDocument(Document doc) {
-        this.doc = doc;
     }
 
     /**
