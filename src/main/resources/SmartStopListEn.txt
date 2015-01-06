@@ -573,3 +573,14 @@ true
 false
 additional
 shown
+gotta
+gonna
+ur
+hw
+wh
+abt
+btw
+dun
+dunno
+liao
+lah

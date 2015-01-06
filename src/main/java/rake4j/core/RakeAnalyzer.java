@@ -15,6 +15,7 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
 
@@ -24,6 +25,7 @@ public class RakeAnalyzer extends Analyzer {
     private List<Pattern> regexList = new ArrayList<>();
     private List<String> punctList = new ArrayList<>();
     private int minNumberLetters = 1;
+    private int minWordsForPhrase = 1;
     
     public RakeAnalyzer() throws URISyntaxException {
         super(true, "RAKE");
@@ -81,7 +83,7 @@ public class RakeAnalyzer extends Analyzer {
     }
     
     List<String> splitToSentences(String text) {
-        String splitter = "[\\.!?,;\\t\\-\"\'\\(\\)\\\\\\n]+";
+        String splitter = "[\\.!?,:;\\t\\-\"\'\\(\\)\\\\\\n]+";
         return Arrays.asList(text.split(splitter));
     }
 
@@ -181,12 +183,7 @@ public class RakeAnalyzer extends Analyzer {
             }
             
             List<String> phrases = Arrays.asList(s.split("\\|"));
-            for (String phrase : phrases) {
-                if (phrase.trim().length() > 0) {
-                    if(phrase.length()>0)
-                        phraseList.add(phrase.trim());
-                }
-            }
+            phraseList.addAll(phrases.parallelStream().filter(phrase -> phrase.trim().length()>0).filter(phrase -> phrase.length() > 0).map(String::trim).collect(Collectors.toList()));
         }
         return phraseList;
     }
@@ -200,7 +197,7 @@ public class RakeAnalyzer extends Analyzer {
             Integer initialOffset = (Integer) entry.getKey();
             String s = (String) entry.getValue();
 
-            for (Pattern pat : stopwordPattern) {
+            for (Pattern pat: stopwordPattern) {
                 Matcher matcher = pat.matcher(s.trim());
                 while (matcher.find()) {
                     matcher.appendReplacement(sb, "|");
@@ -213,13 +210,8 @@ public class RakeAnalyzer extends Analyzer {
             }
 
             List<String> phrases = Arrays.asList(s.split("\\|"));
-            List<String> temp = new ArrayList<>();
-            for (String phrase : phrases) {
-                if (phrase.trim().length()>0) {
-                    temp.add(phrase.trim());
-                }
-            }
-            Map<Integer, String> subPhraseList = getOffsetsOfSplitString(s, temp, initialOffset);
+            phrases = phrases.stream().filter(phrase -> phrase.trim().length()>0).map(String::trim).collect(Collectors.toList());
+            Map<Integer, String> subPhraseList = getOffsetsOfSplitString(s, phrases, initialOffset);
             phraseList.putAll(subPhraseList);
         }
         return phraseList;
@@ -274,6 +266,18 @@ public class RakeAnalyzer extends Analyzer {
         return termList;
     }
 
+    private Map<Integer, String> filteredByLength(Map<Integer, String> phraseList, int minWords) {
+        // TODO parallel
+        Map<Integer, String> result = new HashMap<>();
+        for(Map.Entry e: phraseList.entrySet()) {
+            String s = (String) e.getValue();
+            if(s.split("\\s+").length>=minWords) {
+                result.put((Integer) e.getKey(), (String) e.getValue());
+            }
+        }
+        return result;
+    }
+
     private Map<Integer, Term> generateCandidateKeywordScores(Map<Integer, String> phraseList, Map<String, Float> wordScore) {
         Map<Integer, Term> termList = new HashMap<>();
         for (Map.Entry entry: phraseList.entrySet()) {
@@ -321,6 +325,7 @@ public class RakeAnalyzer extends Analyzer {
         Map<Integer, String> sentenceList = splitToSentencesWithOffsets(doc.getText());
         Map<Integer, String> phraseList = generateCandidateKeywords(sentenceList, regexList);
         Map<String, Float> wordScore = calculateWordScores(new ArrayList<>(phraseList.values()));
+        phraseList = filteredByLength(phraseList, minWordsForPhrase);
         Map<Integer, Term> keywordCandidates = generateCandidateKeywordScores(phraseList, wordScore);
         TreeMap<Integer, Term> sortedKeywords = Sorter.sortByValues(keywordCandidates, new Sorter.ValueComparator<Integer, Term>(keywordCandidates) {
             @Override
@@ -357,5 +362,13 @@ public class RakeAnalyzer extends Analyzer {
 
     public void setMinNumberLetters(int minNumberLetters) {
         this.minNumberLetters = minNumberLetters;
+    }
+
+    public int getMinWordsForPhrase() {
+        return minWordsForPhrase;
+    }
+
+    public void setMinWordsForPhrase(int minWordsForPhrase) {
+        this.minWordsForPhrase = minWordsForPhrase;
     }
 }
