@@ -322,7 +322,8 @@ public class RakeAnalyzer extends Analyzer {
 
     @Override
     public void run() {
-        Map<Integer, String> sentenceList = splitToSentencesWithOffsets(doc.getText());
+        String text = doc.getText().toLowerCase();
+        Map<Integer, String> sentenceList = splitToSentencesWithOffsets(text);
         Map<Integer, String> phraseList = generateCandidateKeywords(sentenceList, regexList);
         Map<String, Float> wordScore = calculateWordScores(new ArrayList<>(phraseList.values()));
         phraseList = filteredByLength(phraseList, minWordsForPhrase);
