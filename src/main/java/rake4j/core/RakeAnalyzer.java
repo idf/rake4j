@@ -1,6 +1,8 @@
 package rake4j.core;
 
 import io.deepreader.java.commons.util.Sorter;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rake4j.core.model.Analyzer;
@@ -92,11 +94,11 @@ public class RakeAnalyzer extends Analyzer {
         return getOffsetsOfSplitString(text, splitTexts, 0);
     }
 
-    private Map<Integer, String> getOffsetsOfSplitString(String s, List<String> splitStrings, int initialOffset) {
+    Map<Integer, String> getOffsetsOfSplitString(String text, List<String> splitStrings, int initialOffset) {
         List<Integer> offsets = new ArrayList<>();
         int offset = -1;
         for(String item: splitStrings) {
-            offset = s.indexOf(item, offset+1);
+            offset = text.indexOf(item, offset+1);
             offsets.add(offset);
         }
         assert splitStrings.size()==offsets.size();
@@ -188,7 +190,7 @@ public class RakeAnalyzer extends Analyzer {
         return phraseList;
     }
 
-    Map<Integer, String> generateCandidateKeywords(Map<Integer, String> sentenceList, List<Pattern> stopwordPattern) {
+    Map<Integer, String> generateCandidateKeywords(Map<Integer, String> sentenceList, List<Pattern> regexList) {
         Map<Integer, String> phraseList = new HashMap<>();
         StringBuffer sb = new StringBuffer();
         Iterator itr = sentenceList.entrySet().iterator();
@@ -197,7 +199,7 @@ public class RakeAnalyzer extends Analyzer {
             Integer initialOffset = (Integer) entry.getKey();
             String s = (String) entry.getValue();
 
-            for (Pattern pat: stopwordPattern) {
+            for (Pattern pat: regexList) {
                 Matcher matcher = pat.matcher(s.trim());
                 while (matcher.find()) {
                     matcher.appendReplacement(sb, "|");
@@ -210,9 +212,53 @@ public class RakeAnalyzer extends Analyzer {
             }
 
             List<String> phrases = Arrays.asList(s.split("\\|"));
-            phrases = phrases.stream().filter(phrase -> phrase.trim().length()>0).map(String::trim).collect(Collectors.toList());
-            Map<Integer, String> subPhraseList = getOffsetsOfSplitString(s, phrases, initialOffset);
+            phrases = phrases.parallelStream().filter(phrase -> phrase.trim().length()>0).map(String::trim).collect(Collectors.toList());
+            Map<Integer, String> subPhraseList = getOffsetsOfSplitString((String) entry.getValue(), phrases, initialOffset);
             phraseList.putAll(subPhraseList);
+        }
+        return phraseList;
+    }
+
+    Map<Integer, String> adjoinKeywords(Map<Integer, String> phraseList, Pattern stopwordPattern, String text) {
+        SortedSet<Integer> keys = new TreeSet<>(phraseList.keySet());
+        boolean adjoined = false;
+        Map<String, List<Pair<Integer, Integer>>> candidates = new HashMap<>();
+
+        Iterator itr = keys.iterator();
+        Integer i;
+        Integer j = (Integer) itr.next();
+        String interior;
+        while(itr.hasNext()) {
+            i = j;
+            j = (Integer) itr.next();
+            interior = text.substring(i+phraseList.get(i).length(), j);
+            List<String> tokens = Arrays.asList(interior.split("\\s+"));
+            if(tokens.parallelStream().map(
+                    token -> stopwordPattern.matcher(token).replaceAll("")).allMatch(
+                    token -> token.trim().length() == 0)
+                    ) {
+                logger.debug(interior);
+                String candidate = text.substring(i, j+phraseList.get(j).length()).trim();
+                if(!candidates.containsKey(candidate)) {
+                    candidates.put(candidate, new ArrayList<>());
+                }
+                candidates.get(candidate).add(new ImmutablePair<>(i, j));
+            }
+        }
+
+        for(Map.Entry<String, List<Pair<Integer, Integer>>> e: candidates.entrySet()) {
+            if(e.getValue().size()>=2) {
+                adjoined = true;
+                for(Pair<Integer, Integer> p: e.getValue()) {
+                    if(phraseList.containsKey(p.getLeft())) {
+                        phraseList.put(p.getLeft(), e.getKey());
+                        phraseList.remove(p.getRight());
+                    }
+                }
+            }
+        }
+        if(adjoined) {  // recursive
+            phraseList = adjoinKeywords(phraseList, stopwordPattern, text);
         }
         return phraseList;
     }
@@ -226,7 +272,7 @@ public class RakeAnalyzer extends Analyzer {
             int wordlistlength = wordlist.size();
             int wordlistdegree = wordlistlength-1;
             for (String word : wordlist) {
-                if (wordFrequency.containsKey(word)==false) {
+                if (!wordFrequency.containsKey(word)) {
                     wordFrequency.put(word, 1);
                 } else {
                     int freq = wordFrequency.get(word)+1;
@@ -234,7 +280,7 @@ public class RakeAnalyzer extends Analyzer {
                 }
 
                 
-                if (wordDegree.containsKey(word)==false) {
+                if (!wordDegree.containsKey(word)) {
                     wordDegree.put(word, wordlistdegree);
                 } else {
                     int deg = wordDegree.get(word)+wordlistdegree;
@@ -325,6 +371,7 @@ public class RakeAnalyzer extends Analyzer {
         String text = doc.getText().toLowerCase();
         Map<Integer, String> sentenceList = splitToSentencesWithOffsets(text);
         Map<Integer, String> phraseList = generateCandidateKeywords(sentenceList, regexList);
+        phraseList = adjoinKeywords(phraseList, buildStopWordRegex(stopWordList), text);
         Map<String, Float> wordScore = calculateWordScores(new ArrayList<>(phraseList.values()));
         phraseList = filteredByLength(phraseList, minWordsForPhrase);
         Map<Integer, Term> keywordCandidates = generateCandidateKeywordScores(phraseList, wordScore);
@@ -339,7 +386,7 @@ public class RakeAnalyzer extends Analyzer {
             }
         });
         doc.setTermMap(sortedKeywords);
-        // TODO top k keywords
+        // top k keywords is processed in indexing phase
     }
 
     /**

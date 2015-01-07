@@ -4,7 +4,9 @@ import junit.framework.TestCase;
 import rake4j.core.model.Document;
 
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -69,7 +71,28 @@ public class RakeAnalyzerTest extends TestCase {
         assert map.get(37).equals("sentence 3");
 
     }
+    public void testGetOffsetsOfSplitString() throws URISyntaxException {
+        String text = "Compatibility of systems of linear constraints over the set of natural numbers.";
+        text = text.toLowerCase();
+        List<String> list = new ArrayList<>();
+        list.add("compatibility");
+        list.add("systems");
+        RakeAnalyzer rake = new RakeAnalyzer();
+        Map<Integer, String> map = rake.getOffsetsOfSplitString(text, list, 0);
+        assert map.get(0).equals("compatibility");
+        assert map.get(17).equals("systems");
 
+    }
+    public void testAdjoinKeywords() throws URISyntaxException {
+        // String text = "Gang of Four. Gang of Four"; // won't fix, four is a stop word
+        String text = "axis of evil of night. axis of evil of night. Something else";
+        Document doc = new Document(text);
+        RakeAnalyzer rake = new RakeAnalyzer();
+        rake.loadDocument(doc);
+        rake.run();
+        assert doc.termMapToString().contains("axis of evil of night");
+
+    }
     public void testRun() throws URISyntaxException {
         String text = "Compatibility of systems of linear constraints over the set of natural numbers. Criteria of compatibility of a system of linear Diophantine equations, strict inequations, and nonstrict inequations are considered. Upper bounds for components of a minimal set of solutions and algorithms of construction of minimal generating sets of solutions for all types of systems are given. These criteria and the corresponding algorithms for constructing a minimal supporting set of solutions can be used in solving all the considered types of systems and systems of mixed types.";
         String actual = "";
