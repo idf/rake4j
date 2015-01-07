@@ -1,7 +1,6 @@
 package rake4j.core;
 
 import rake4j.core.index.Index;
-import rake4j.core.model.Analyzer;
 import rake4j.core.model.Document;
 
 /**

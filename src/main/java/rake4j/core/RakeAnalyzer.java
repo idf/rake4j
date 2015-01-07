@@ -5,7 +5,6 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import rake4j.core.model.Analyzer;
 import rake4j.core.model.Term;
 
 import java.io.IOException;
@@ -234,7 +233,7 @@ public class RakeAnalyzer extends Analyzer {
             i = j;
             j = (Integer) itr.next();
             int interior_start = i+phraseList.get(i).length();
-            if(interior_start>j) {  // TODO, debug
+            if(interior_start>j) {  // unicode issues
                 logger.warn("Overlapping index when adjoining keywords: "+interior_start+" "+j);
                 continue;
             }
