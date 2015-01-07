@@ -4,6 +4,7 @@ import io.deepreader.java.commons.util.Displayer;
 import rake4j.core.model.Document;
 import rake4j.core.model.Term;
 
+import java.io.Serializable;
 import java.util.*;
 
 /**
@@ -11,7 +12,7 @@ import java.util.*;
  * Date: 1/6/2015
  * Time: 20:15
  */
-public class Index {
+public class Index implements Serializable {
     Map<String, PostingsArray> invertedIndex = new HashMap<>();
 
     public void processDoc(Document doc, float topPercentage) {
@@ -42,4 +43,7 @@ public class Index {
     public String toString() {
         return Displayer.display(this.invertedIndex);
     }
+
+
+
 }

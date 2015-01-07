@@ -225,13 +225,21 @@ public class RakeAnalyzer extends Analyzer {
         Map<String, List<Pair<Integer, Integer>>> candidates = new HashMap<>();
 
         Iterator itr = keys.iterator();
+        if(!itr.hasNext())
+            return phraseList;
+
         Integer i;
         Integer j = (Integer) itr.next();
         String interior;
         while(itr.hasNext()) {
             i = j;
             j = (Integer) itr.next();
-            interior = text.substring(i+phraseList.get(i).length(), j);
+            int interior_start = i+phraseList.get(i).length();
+            if(interior_start>j) {  // TODO, debug
+                logger.warn("Overlapping index when adjoining keywords: "+interior_start+" "+j);
+                continue;
+            }
+            interior = text.substring(interior_start, j);
             List<String> tokens = Arrays.asList(interior.split("\\s+"));
             if(tokens.parallelStream().map(
                     token -> stopwordPattern.matcher(token).replaceAll("")).allMatch(
