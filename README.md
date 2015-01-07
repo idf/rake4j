@@ -22,6 +22,11 @@ Run with offset information
         rake.run();
         System.out.println(doc.termMapToString());
 ```
+#Features
+Recognized keywords from the algorithm based on stop words
+* Adjoining keywords to recognized "axis of evil".
+* Construct index of keywords with term frequency `tf` and document frequency `df`.
+
 #Dependencies
 In pom.xml, another custom maven module dependency is required:
 ```xml
