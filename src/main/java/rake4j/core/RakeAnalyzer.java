@@ -64,8 +64,7 @@ public class RakeAnalyzer extends Analyzer {
     private Pattern buildStopWordRegex(List<String> pStopWords) {
         StringBuilder sb = new StringBuilder();
         for (String string : pStopWords) {
-            sb.append("\\b").append(string.trim()).append("\\b").append("|");
-            // TODO, hyphen
+            sb.append("\\b").append(string.trim()).append("(?![\\w-])").append("|");  // hyphen: -ish
         }
         String pattern = sb.substring(0, sb.length() - 1);
         Pattern pat = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
@@ -73,7 +72,7 @@ public class RakeAnalyzer extends Analyzer {
     }
     
     private List<String> separateToWords(String text, int minWordReturnSize) {
-        String splitter = "[^a-zA-Z0-9_\\+\\-/]";
+        String splitter = "[^a-zA-Z0-9_\\+/]";
         List<String> words = new ArrayList<>();
         for(String word: text.split(splitter)) {
             word = word.trim().toLowerCase();
@@ -85,7 +84,7 @@ public class RakeAnalyzer extends Analyzer {
     }
     
     List<String> splitToSentences(String text) {
-        String splitter = "[\\.!?,:;\\t\\-\"\'\\(\\)\\\\\\n]+";
+        String splitter = "[\\.!?,:;\\t\"\'\\(\\)\\\\\\n@=]+|\\s\\-(\\s)?|(\\s)?\\-\\s";
         return Arrays.asList(text.split(splitter));
     }
 
