@@ -44,6 +44,11 @@ public class Index implements Serializable {
         return Displayer.display(this.invertedIndex);
     }
 
-
+    public Integer docFreq(String term) {
+        if(invertedIndex.containsKey(term)) {
+            return invertedIndex.get(term).df;
+        }
+        return 0;
+    }
 
 }
