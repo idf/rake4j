@@ -20,6 +20,7 @@ package rake4j.core.model;
  */
 
 
+import io.deepreader.java.commons.util.Displayer;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -98,12 +99,7 @@ public class Document {
     }
 
     public String termMapToString() {
-        StringBuffer sb = new StringBuffer();
-        for(Map.Entry entry: termMap.entrySet()) {
-            sb.append(entry.getKey()+": ");
-            sb.append(entry.getValue().toString()+"\n");
-        }
-        return sb.toString();
+        return Displayer.display(termMap);
     }
 
     public String getText() {

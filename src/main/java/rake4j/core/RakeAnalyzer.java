@@ -1,5 +1,6 @@
 package rake4j.core;
 
+import io.deepreader.java.commons.util.Displayer;
 import io.deepreader.java.commons.util.Sorter;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -83,7 +84,7 @@ public class RakeAnalyzer extends Analyzer {
     }
     
     List<String> splitToSentences(String text) {
-        String splitter = "[\\.!?,:;\\t\"\'\\(\\)\\\\\\n@=]+|\\s\\-(\\s)?|(\\s)?\\-\\s";
+        String splitter = "[\\.!?,:;\\t\"\'\\(\\)\\\\\\n@=~]+|\\s\\-(\\s)?|(\\s)?\\-\\s";
         return Arrays.asList(text.split(splitter));
     }
 
@@ -94,10 +95,11 @@ public class RakeAnalyzer extends Analyzer {
 
     Map<Integer, String> getOffsetsOfSplitString(String text, List<String> splitStrings, int initialOffset) {
         List<Integer> offsets = new ArrayList<>();
-        int offset = -1;
+        int offset = 0;
         for(String item: splitStrings) {
-            offset = text.indexOf(item, offset+1);
+            offset = text.indexOf(item, offset);
             offsets.add(offset);
+            offset += item.length();
         }
         assert splitStrings.size()==offsets.size();
 
@@ -233,8 +235,8 @@ public class RakeAnalyzer extends Analyzer {
             i = j;
             j = (Integer) itr.next();
             int interior_start = i+phraseList.get(i).length();
-            if(interior_start>j) {  // unicode issues
-                logger.warn("Overlapping index when adjoining keywords: "+interior_start+" "+j);
+            if(interior_start>j) {
+                logger.error("Overlapping index when adjoining keywords: "+phraseList.get(i)+" & "+phraseList.get(j));
                 continue;
             }
             interior = text.substring(interior_start, j);
@@ -243,7 +245,7 @@ public class RakeAnalyzer extends Analyzer {
                     token -> stopwordPattern.matcher(token).replaceAll("")).allMatch(
                     token -> token.trim().length() == 0)
                     ) {
-                logger.debug(interior);
+                logger.trace(interior);
                 String candidate = text.substring(i, j+phraseList.get(j).length()).trim();
                 if(!candidates.containsKey(candidate)) {
                     candidates.put(candidate, new ArrayList<>());
@@ -319,15 +321,10 @@ public class RakeAnalyzer extends Analyzer {
     }
 
     private Map<Integer, String> filteredByLength(Map<Integer, String> phraseList, int minWords) {
-        // TODO parallel
-        Map<Integer, String> result = new HashMap<>();
-        for(Map.Entry e: phraseList.entrySet()) {
-            String s = (String) e.getValue();
-            if(s.split("\\s+").length>=minWords) {
-                result.put((Integer) e.getKey(), (String) e.getValue());
-            }
-        }
-        return result;
+        return phraseList.entrySet()
+                .parallelStream()
+                .filter(e -> e.getValue().split("\\s+").length>=minWords)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     private Map<Integer, Term> generateCandidateKeywordScores(Map<Integer, String> phraseList, Map<String, Float> wordScore) {
@@ -384,11 +381,20 @@ public class RakeAnalyzer extends Analyzer {
         TreeMap<Integer, Term> sortedKeywords = Sorter.sortByValues(keywordCandidates, new Sorter.ValueComparator<Integer, Term>(keywordCandidates) {
             @Override
             public int compare(Integer a, Integer b) {
-                if (base.get(a).getScore()<base.get(b).getScore()) {
-                    return 1;
-                } else {
-                    return -1;
+                try {
+                    if (base.get(a).getScore()<base.get(b).getScore())
+                        return 1;
+                    else if(a.equals(b))
+                        return 0;
+                    else
+                        return -1;
                 }
+                catch (NullPointerException e) {
+                    // TODO
+                    logger.error("No phrases in: "+ Displayer.display(base));
+                    return 0;
+                }
+
             }
         });
         doc.setTermMap(sortedKeywords);

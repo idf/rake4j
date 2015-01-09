@@ -616,6 +616,8 @@ hmhm
 hmm
 huh
 hw
+im
+kinda
 la
 lah
 lar
@@ -630,6 +632,7 @@ mah
 meh
 neh
 niao
+nt
 nv
 nvr
 omg
