@@ -1,6 +1,5 @@
 package rake4j.core;
 
-import io.deepreader.java.commons.util.Displayer;
 import io.deepreader.java.commons.util.Sorter;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -236,7 +235,7 @@ public class RakeAnalyzer extends Analyzer {
             j = (Integer) itr.next();
             int interior_start = i+phraseList.get(i).length();
             if(interior_start>j) {
-                logger.error("Overlapping index when adjoining keywords: "+phraseList.get(i)+" & "+phraseList.get(j));
+                logger.error("Overlapping index when adjoining keywords: " + phraseList.get(i) + " & " + phraseList.get(j));
                 continue;
             }
             interior = text.substring(interior_start, j);
@@ -390,9 +389,7 @@ public class RakeAnalyzer extends Analyzer {
                         return -1;
                 }
                 catch (NullPointerException e) {
-                    // TODO
-                    logger.error("No phrases in: "+ Displayer.display(base));
-                    return 0;
+                    return -1;
                 }
 
             }

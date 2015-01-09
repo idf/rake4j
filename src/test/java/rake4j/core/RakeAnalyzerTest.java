@@ -111,7 +111,6 @@ public class RakeAnalyzerTest extends TestCase {
         rake.loadDocument(doc);
         rake.run();
         assert doc.termMapToString().contains("axis of evil of night");
-
     }
     public void testRun() throws URISyntaxException {
         Document doc = new Document(text);
