@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Properties;
-import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
 /*
@@ -46,7 +45,7 @@ import java.util.stream.Collectors;
  *
  * @author Angel Conde Manjon
  */
-public abstract class Analyzer implements Callable<Integer> {
+public abstract class Analyzer implements Runnable {
     
     //TODO if we process a corpus instead a document, the termList in each 
     //document is unusable, thing about the model and refactor
@@ -214,20 +213,8 @@ public abstract class Analyzer implements Callable<Integer> {
      * The class that represents the action of running an algorithm in a corpus
      * must be implemented
      */
-    public abstract void run();
-
-    /**
-     * This will be used by the ThreadPool to execute the algorithm and return
-     * the results
-     *
-     * @return List<Term> a list of the extracted terms by the algorithm
-     * @throws Exception
-     */
     @Override
-    public final Integer call() throws Exception {
-        run();
-        return new Integer(0);
-    }
+    public abstract void run();
 
     /**
      * Sets the term list of this algorithm

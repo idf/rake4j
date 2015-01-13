@@ -610,7 +610,9 @@ haha
 hahaha
 hai
 havent
+hi
 hehe
+hey
 hm
 hmhm
 hmm
@@ -636,6 +638,7 @@ nt
 nv
 nvr
 omg
+oops
 oso
 pls
 rah
