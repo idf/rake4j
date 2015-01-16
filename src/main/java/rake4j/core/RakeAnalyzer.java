@@ -83,7 +83,7 @@ public class RakeAnalyzer extends Analyzer {
     }
     
     List<String> splitToSentences(String text) {
-        String splitter = "[\\.!?,:;\\t\"\'\\(\\)\\\\\\n@=~]+|\\s\\-(\\s)?|(\\s)?\\-\\s";
+        String splitter = "[\\.!?,:;\\t\"\'\\(\\)\\\\\\n@=~&]+|\\s\\-(\\s)?|(\\s)?\\-\\s";
         return Arrays.asList(text.split(splitter));
     }
 
@@ -323,7 +323,7 @@ public class RakeAnalyzer extends Analyzer {
         return phraseList.entrySet()
                 .parallelStream()
                 .filter(e -> e.getValue().split("\\s+").length>=minWords)
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                .collect(Collectors.toConcurrentMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     private Map<Integer, Term> generateCandidateKeywordScores(Map<Integer, String> phraseList, Map<String, Float> wordScore) {
