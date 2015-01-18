@@ -91,9 +91,13 @@ public class Document {
     }
 
     public String termListToString() {
-        StringBuffer sb = new StringBuffer();
-        for(Term t: termList) {
-            sb.append(t.toString()+"\n");
+        return termListToString(1.0);
+    }
+
+    public String termListToString(double portion) {
+        StringBuilder sb = new StringBuilder();
+        for(int i=0; i<Math.min(termList.size(), termList.size()*portion); i++) {
+            sb.append(termList.get(i).toString()+"\n");
         }
         return sb.toString();
     }

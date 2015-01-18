@@ -3,6 +3,7 @@ package rake4j.core;
 import junit.framework.TestCase;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Test;
 import rake4j.core.model.Document;
 
 import java.net.URISyntaxException;
@@ -28,29 +29,27 @@ public class RakeAnalyzerTest extends TestCase {
 
     public void testRunWithoutOffset() throws URISyntaxException {
         String expected = "minimal generating sets\t8.666667\n" +
-                "linear Diophantine equations\t8.5\n" +
+                "linear diophantine equations\t8.5\n" +
                 "minimal supporting set\t7.666667\n" +
                 "minimal set\t4.666667\n" +
                 "linear constraints\t4.5\n" +
                 "natural numbers\t4.0\n" +
                 "strict inequations\t4.0\n" +
                 "nonstrict inequations\t4.0\n" +
-                "Upper bounds\t4.0\n" +
+                "upper bounds\t4.0\n" +
                 "mixed types\t3.6666665\n" +
                 "considered types\t3.1666665\n" +
                 "set\t2.0\n" +
                 "types\t1.6666666\n" +
                 "considered\t1.5\n" +
-                "Compatibility\t1.0\n" +
-                "systems\t1.0\n" +
-                "Criteria\t1.0\n" +
                 "compatibility\t1.0\n" +
+                "systems\t1.0\n" +
+                "criteria\t1.0\n" +
                 "system\t1.0\n" +
                 "components\t1.0\n" +
                 "solutions\t1.0\n" +
                 "algorithms\t1.0\n" +
                 "construction\t1.0\n" +
-                "criteria\t1.0\n" +
                 "constructing\t1.0\n" +
                 "solving\t1.0\n";
         
@@ -60,7 +59,7 @@ public class RakeAnalyzerTest extends TestCase {
         rake.loadDocument(doc);
         rake.runWithoutOffset();
         // System.out.println(doc.termListToString());
-        assertEquals(expected, doc.termListToString());
+        assertEquals(expected.toLowerCase(), doc.termListToString());
     }
 
     public void testSplitSentences() throws URISyntaxException {
@@ -119,6 +118,11 @@ public class RakeAnalyzerTest extends TestCase {
         rake.run();
         // System.out.println(doc.termMapToString());
         assert doc.getTermMap().get(121).getScore()==8.5;
+    }
+
+    @Test
+    public void testRunWithFile() throws Exception {
+        RakeAnalyzer.run(this.getClass().getResource("/G_KARYPIS_Empirical_and_t.txt").toString().replace("file:/", ""));
     }
 
 }

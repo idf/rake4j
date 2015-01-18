@@ -1,10 +1,12 @@
 package rake4j.core;
 
+import io.deepreader.java.commons.util.IOHandler;
 import io.deepreader.java.commons.util.Sorter;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rake4j.core.model.Document;
 import rake4j.core.model.Term;
 
 import java.io.IOException;
@@ -83,7 +85,7 @@ public class RakeAnalyzer extends Analyzer {
     }
     
     List<String> splitToSentences(String text) {
-        String splitter = "[\\.!?,:;\\t\"\'\\(\\)\\\\\\n@=~&]+|\\s\\-(\\s)?|(\\s)?\\-\\s";
+        String splitter = "[\\.!?,:;\\t\"\'\\(\\)\\\\\\n@=~&\\+]+|\\s\\-(\\s)?|(\\s)?\\-\\s";
         return Arrays.asList(text.split(splitter));
     }
 
@@ -326,6 +328,12 @@ public class RakeAnalyzer extends Analyzer {
                 .collect(Collectors.toConcurrentMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
+    private List<String> filteredByLength(List<String> phraseList, int minWords) {
+        return phraseList.parallelStream()
+                .filter(e -> e.split("\\s+").length>=minWords)
+                .collect(Collectors.toList());
+    }
+
     private Map<Integer, Term> generateCandidateKeywordScores(Map<Integer, String> phraseList, Map<String, Float> wordScore) {
         Map<Integer, Term> termList = new HashMap<>();
         for (Map.Entry entry: phraseList.entrySet()) {
@@ -359,9 +367,10 @@ public class RakeAnalyzer extends Analyzer {
     }
 
     public void runWithoutOffset() {
-        List<String> sentenceList = splitToSentences(doc.getText());
+        List<String> sentenceList = splitToSentences(doc.getText().toLowerCase());
         List<String> phraseList = generateCandidateKeywords(sentenceList, regexList);
         Map<String, Float> wordScore = calculateWordScores(phraseList);
+        phraseList = filteredByLength(phraseList, minWordsForPhrase);
         List<Term> keywordCandidates = generateCandidateKeywordScores(phraseList, wordScore);
         Comparator<? super Term> cmp = (o1, o2) -> o1.getScore() > o2.getScore() ? -1 : o1.getScore() == o2.getScore() ? 0 : 1;
         List<Term> sortedKeywords = keywordCandidates.parallelStream().sorted(cmp).distinct().collect(toList());
@@ -396,6 +405,16 @@ public class RakeAnalyzer extends Analyzer {
         });
         doc.setTermMap(sortedKeywords);
         // top k keywords is processed in indexing phase
+    }
+
+    public static void run(String path) throws Exception {
+        String text = IOHandler.read(path);
+        RakeAnalyzer analyzer = new RakeAnalyzer();
+        analyzer.setMinWordsForPhrase(2);
+        Document doc = new Document(text);
+        analyzer.loadDocument(doc);
+        analyzer.runWithoutOffset();
+        System.out.println(doc.termListToString(0.5));
     }
 
     /**
