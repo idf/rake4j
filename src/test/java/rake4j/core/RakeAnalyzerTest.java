@@ -127,12 +127,12 @@ public class RakeAnalyzerTest extends TestCase {
 
     @Test
     public void testStemming() throws Exception {
-        String text = "students student";
+        String text = "students student friends";
         Document doc = new Document(text);
         RakeAnalyzer rake = new RakeAnalyzer();
         rake.loadDocument(doc);
         rake.run();
-        assertTrue(doc.getTermMap().toString().contains("student student"));
+        assertTrue(doc.getTermMap().toString().contains("student student friend"));
 
         text = "accountancy modules";
         doc = new Document(text);
