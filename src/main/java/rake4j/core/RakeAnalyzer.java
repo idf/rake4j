@@ -6,6 +6,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rake4j.core.analysis.en.KStemmer;
 import rake4j.core.model.Document;
 import rake4j.core.model.Term;
 
@@ -29,6 +30,7 @@ public class RakeAnalyzer extends Analyzer {
     private List<String> punctList = new ArrayList<>();
     private int minNumberLetters = 1;
     private int minWordsForPhrase = 1;
+    private KStemmer stemmer = new KStemmer();
     
     public RakeAnalyzer() throws URISyntaxException {
         super(true, "RAKE");
@@ -272,6 +274,20 @@ public class RakeAnalyzer extends Analyzer {
         return phraseList;
     }
 
+    private Map<Integer, String> stem(Map<Integer, String> phraseList) {
+        Map<Integer, String> ret = new HashMap<>();
+        for(Map.Entry<Integer, String> e: phraseList.entrySet()) {
+            String phrase = e.getValue();
+            List<String> stemmedWords = new ArrayList<>();
+            for(String w: phrase.split("\\s+")) {
+                stemmedWords.add(this.stemmer.stem(w));
+            }
+            phrase = stemmedWords.stream().collect(Collectors.joining(" "));
+            ret.put(e.getKey(), phrase);
+        }
+        return ret;
+    }
+
     private Map<String, Float> calculateWordScores(List<String> phraseList) {
         Map<String, Integer> wordFrequency = new HashMap<>();
         Map<String, Integer> wordDegree = new HashMap<>();
@@ -383,6 +399,7 @@ public class RakeAnalyzer extends Analyzer {
         Map<Integer, String> sentenceList = splitToSentencesWithOffsets(text);
         Map<Integer, String> phraseList = generateCandidateKeywords(sentenceList, regexList);
         phraseList = adjoinKeywords(phraseList, buildStopWordRegex(stopWordList), text);
+        phraseList = stem(phraseList);
         Map<String, Float> wordScore = calculateWordScores(new ArrayList<>(phraseList.values()));
         phraseList = filteredByLength(phraseList, minWordsForPhrase);
         Map<Integer, Term> keywordCandidates = generateCandidateKeywordScores(phraseList, wordScore);
@@ -390,17 +407,13 @@ public class RakeAnalyzer extends Analyzer {
             @Override
             public int compare(Integer a, Integer b) {
                 try {
-                    if (base.get(a).getScore()<base.get(b).getScore())
-                        return 1;
-                    else if(a.equals(b))
-                        return 0;
-                    else
-                        return -1;
+                    if (base.get(a).getScore()<base.get(b).getScore()) return 1;
+                    else if(a.equals(b)) return 0;
+                    else return -1;
                 }
                 catch (NullPointerException e) {
                     return -1;
                 }
-
             }
         });
         doc.setTermMap(sortedKeywords);

@@ -125,4 +125,14 @@ public class RakeAnalyzerTest extends TestCase {
         RakeAnalyzer.run(this.getClass().getResource("/G_KARYPIS_Empirical_and_t.txt").toString().replace("file:/", ""));
     }
 
+    @Test
+    public void testStemming() throws Exception {
+        String text = "students student";
+        Document doc = new Document(text);
+        RakeAnalyzer rake = new RakeAnalyzer();
+        rake.loadDocument(doc);
+        rake.run();
+        assert doc.getTermMap().containsValue("student student");
+    }
+
 }

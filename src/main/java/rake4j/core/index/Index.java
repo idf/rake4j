@@ -51,4 +51,11 @@ public class Index implements Serializable {
         return 0;
     }
 
+    public Integer totalTermFreq(String term) {
+        if(invertedIndex.containsKey(term)) {
+            return invertedIndex.get(term).tf;
+        }
+        return 0;
+    }
+
 }

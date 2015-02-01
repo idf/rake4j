@@ -231,6 +231,7 @@ instead
 into
 inward
 is
+ish
 isn't
 it
 it'd
@@ -656,3 +657,11 @@ wat
 wh
 wtf
 zeh
+liaoz
+beh
+kan
+ai
+yah
+sia
+loh
+ler
