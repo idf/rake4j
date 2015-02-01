@@ -14,7 +14,7 @@ Normal run
         rake.runWithoutOffset();
         System.out.println(doc.termListToString());
 ```
-Run with offset information 
+Run with offset information and stemming 
 ```java
         Document doc = new Document(text);
         RakeAnalyzer rake = new RakeAnalyzer();
@@ -25,6 +25,7 @@ Run with offset information
 #Features
 Recognized keywords from the algorithm based on stop words
 * Adjoining keywords to recognized "axis of evil".
+* KStemming algorithm ported from Lucene, to stem "university students" to "university student".
 * Construct index of keywords with term frequency `tf` and document frequency `df`.
 
 #Dependencies
