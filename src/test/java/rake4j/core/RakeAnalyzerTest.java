@@ -77,9 +77,9 @@ public class RakeAnalyzerTest extends TestCase {
             // System.out.println(pair.getKey()+": "+pair.getValue());
         }
 
-        assert map.get(0).equals("sentence 1");
-        assert map.get(15).equals("sentence sentence 2");
-        assert map.get(37).equals("sentence 3");
+        assertTrue(map.get(0).equals("sentence 1"));
+        assertTrue(map.get(15).equals("sentence sentence 2"));
+        assertTrue(map.get(37).equals("sentence 3"));
 
     }
     public void testGetOffsetsOfSplitString() throws URISyntaxException {
@@ -90,8 +90,8 @@ public class RakeAnalyzerTest extends TestCase {
         list.add("systems");
         RakeAnalyzer rake = new RakeAnalyzer();
         Map<Integer, String> map = rake.getOffsetsOfSplitString(text, list, 0);
-        assert map.get(0).equals("compatibility");
-        assert map.get(17).equals("systems");
+        assertTrue(map.get(0).equals("compatibility"));
+        assertTrue(map.get(17).equals("systems"));
 
     }
     public void testGetOffsetsOfSplitString2() throws Exception {
@@ -109,7 +109,7 @@ public class RakeAnalyzerTest extends TestCase {
         RakeAnalyzer rake = new RakeAnalyzer();
         rake.loadDocument(doc);
         rake.run();
-        assert doc.termMapToString().contains("axis of evil of night");
+        assertTrue(doc.termMapToString().contains("axis of evil of night"));
     }
     public void testRun() throws URISyntaxException {
         Document doc = new Document(text);
@@ -117,7 +117,7 @@ public class RakeAnalyzerTest extends TestCase {
         rake.loadDocument(doc);
         rake.run();
         // System.out.println(doc.termMapToString());
-        assert doc.getTermMap().get(121).getScore()==8.5;
+        assertTrue(doc.getTermMap().get(121).getScore()==8.5);
     }
 
     @Test
@@ -132,7 +132,13 @@ public class RakeAnalyzerTest extends TestCase {
         RakeAnalyzer rake = new RakeAnalyzer();
         rake.loadDocument(doc);
         rake.run();
-        assert doc.getTermMap().containsValue("student student");
+        assertTrue(doc.getTermMap().toString().contains("student student"));
+
+        text = "accountancy modules";
+        doc = new Document(text);
+        rake.loadDocument(doc);
+        rake.run();
+        assertTrue(doc.getTermMap().toString().contains("accountancy module"));
     }
 
 }

@@ -274,6 +274,12 @@ public class RakeAnalyzer extends Analyzer {
         return phraseList;
     }
 
+    /**
+     * Interface KStemming Algorithm
+     * Stemming will not change the offset information
+     * @param phraseList
+     * @return
+     */
     private Map<Integer, String> stem(Map<Integer, String> phraseList) {
         Map<Integer, String> ret = new HashMap<>();
         for(Map.Entry<Integer, String> e: phraseList.entrySet()) {
