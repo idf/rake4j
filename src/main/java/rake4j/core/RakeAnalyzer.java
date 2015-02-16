@@ -27,6 +27,7 @@ public class RakeAnalyzer extends Analyzer {
     private List<String> stopWordList = new ArrayList<>();
     transient private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private List<Pattern> regexList = new ArrayList<>();
+    private Pattern stopWordPat ;
     private List<String> punctList = new ArrayList<>();
     private int minNumberLetters = 1;
     private int minWordsForPhrase = 1;
@@ -379,13 +380,17 @@ public class RakeAnalyzer extends Analyzer {
             logger.error("The method " + this.getName() + " requires a StopWordList to build the candidate list");
             return;
         }
-        Pattern pat = buildStopWordRegex(stopWordList);
-        regexList.add(pat);
+        stopWordPat = buildStopWordRegex(stopWordList);
+        regexList.add(stopWordPat);
         
         if (!punctList.isEmpty()) {
             Pattern pat2 = buildPunctStopWordRegex(punctList);
             regexList.add(pat2);
         }
+    }
+
+    public Pattern getStopWordPat() {
+        return stopWordPat;
     }
 
     public void runWithoutOffset() {
@@ -404,20 +409,19 @@ public class RakeAnalyzer extends Analyzer {
         String text = doc.getText().toLowerCase();
         Map<Integer, String> sentenceList = splitToSentencesWithOffsets(text);
         Map<Integer, String> phraseList = generateCandidateKeywords(sentenceList, regexList);
-        phraseList = adjoinKeywords(phraseList, buildStopWordRegex(stopWordList), text);
+        phraseList = adjoinKeywords(phraseList, stopWordPat, text);
         phraseList = stem(phraseList);
         Map<String, Float> wordScore = calculateWordScores(new ArrayList<>(phraseList.values()));
         phraseList = filteredByLength(phraseList, minWordsForPhrase);
         Map<Integer, Term> keywordCandidates = generateCandidateKeywordScores(phraseList, wordScore);
-        TreeMap<Integer, Term> sortedKeywords = Sorter.sortByValues(keywordCandidates, new Sorter.ValueComparator<Integer, Term>(keywordCandidates) {
+        TreeMap<Integer, Term> sortedKeywords = Sorter.sortByValue(keywordCandidates, new Sorter.ValueComparator<Integer, Term>(keywordCandidates) {
             @Override
             public int compare(Integer a, Integer b) {
                 try {
-                    if (base.get(a).getScore()<base.get(b).getScore()) return 1;
-                    else if(a.equals(b)) return 0;
+                    if (base.get(a).getScore() < base.get(b).getScore()) return 1;
+                    else if (a.equals(b)) return 0;
                     else return -1;
-                }
-                catch (NullPointerException e) {
+                } catch (NullPointerException e) {
                     return -1;
                 }
             }
