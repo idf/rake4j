@@ -1,5 +1,6 @@
 package rake4j.core;
 
+import io.deepreader.java.commons.util.Displayer;
 import io.deepreader.java.commons.util.IOHandler;
 import io.deepreader.java.commons.util.Sorter;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -287,7 +288,13 @@ public class RakeAnalyzer extends Analyzer {
             String phrase = e.getValue();
             List<String> stemmedWords = new ArrayList<>();
             for(String w: phrase.split("\\s+")) {
-                stemmedWords.add(this.stemmer.stem(w));
+                try {
+                    stemmedWords.add(this.stemmer.stem(w));
+                }
+                catch (ArrayIndexOutOfBoundsException ex) {
+                    logger.warn(Displayer.display(ex));
+                    stemmedWords.add(w);
+                }
             }
             phrase = stemmedWords.stream().collect(Collectors.joining(" "));
             ret.put(e.getKey(), phrase);
