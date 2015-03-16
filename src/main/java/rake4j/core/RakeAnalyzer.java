@@ -112,7 +112,9 @@ public class RakeAnalyzer extends Analyzer {
         for(int i=0; i<offsets.size(); i++) {
             offset2item.put(offsets.get(i)+initialOffset, splitStrings.get(i));
         }
-        assert offset2item.size()==offsets.size();
+        if(offset2item.size()!=offsets.size()) {
+            logger.trace(offset2item.size()+" not equal to "+offsets.size());
+        }
         return offset2item;
     }
 

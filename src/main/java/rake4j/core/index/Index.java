@@ -14,17 +14,18 @@ import java.util.*;
  */
 public class Index implements Serializable {
     Map<String, PostingsArray> invertedIndex = new HashMap<>();
+    int numDocs = 0;
 
     public void processDoc(Document doc, float topPercentage) {
+        numDocs++;
+
         TreeMap<Integer, Term> termMap = doc.getTermMap();
         Set<String> repeated = new HashSet<>();
 
-        int cnt = 0;
         float upper = termMap.size()*topPercentage;
         Iterator itr = termMap.entrySet().iterator();
-        while(itr.hasNext() && cnt<=upper) {
+        for(int cnt=0; itr.hasNext() && cnt<=upper; cnt++) {
             Map.Entry e = (Map.Entry) itr.next();
-            cnt += 1;
             Term t = (Term) e.getValue();
             String s = t.getTermText();
             if(!invertedIndex.containsKey(s)) {
@@ -36,7 +37,6 @@ public class Index implements Serializable {
             }
             invertedIndex.get(s).tf += 1;
         }
-
     }
 
     @Override
@@ -58,4 +58,7 @@ public class Index implements Serializable {
         return 0;
     }
 
+    public Integer numDocs() {
+        return numDocs;
+    }
 }
