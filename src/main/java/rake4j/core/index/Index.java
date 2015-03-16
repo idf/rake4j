@@ -15,6 +15,8 @@ import java.util.*;
 public class Index implements Serializable {
     Map<String, PostingsArray> invertedIndex = new HashMap<>();
     int numDocs = 0;
+    int totalTermFreq = 0;
+    int totalDocFreq = 0;
 
     public void processDoc(Document doc, float topPercentage) {
         numDocs++;
@@ -33,9 +35,11 @@ public class Index implements Serializable {
             }
             if(!repeated.contains(s)) {
                 invertedIndex.get(s).df += 1;
+                totalDocFreq += 1;
                 repeated.add(s);
             }
             invertedIndex.get(s).tf += 1;
+            totalTermFreq += 1;
         }
     }
 
@@ -60,5 +64,17 @@ public class Index implements Serializable {
 
     public Integer numDocs() {
         return numDocs;
+    }
+
+    public int totalTermFreq() {
+        return totalTermFreq;
+    }
+
+    public int totalDocFreq() {
+        return totalDocFreq;
+    }
+
+    public Map<String, PostingsArray> getInvertedIndex() {
+        return invertedIndex;
     }
 }
