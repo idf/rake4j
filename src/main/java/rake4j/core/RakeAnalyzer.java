@@ -114,6 +114,7 @@ public class RakeAnalyzer extends Analyzer {
         }
         if(offset2item.size()!=offsets.size()) {
             logger.trace(offset2item.size()+" not equal to "+offsets.size());
+            logger.trace("One possible issue is the usage of hyphen in the raw text");
         }
         return offset2item;
     }
