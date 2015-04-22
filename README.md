@@ -39,11 +39,11 @@ In pom.xml, another custom maven module dependency is required:
 ```
 You can get the module manually by:
 ```
-git clone https://github.com/zhangdanyangg/commons-util
+git clone https://github.com/idf/commons-util
 ```
-, which is hosted [here](https://github.com/zhangdanyangg/commons-util).
+, which is hosted [here](https://github.com/idf/commons-util).
 
 #References
 [Python RAKE](https://github.com/aneesha/RAKE)  
-[Python RAKE (forked)](https://github.com/zhangdanyangg/RAKE)  
-[Java RAKE](https://github.com/Neuw84/RAKE-Java)
+[Python RAKE (forked)](https://github.com/idf/RAKE)  
+[Java RAKE](https://github.com/Neuw84/RAKE-Java)  
