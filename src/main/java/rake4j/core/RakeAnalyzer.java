@@ -3,6 +3,7 @@ package rake4j.core;
 import io.deepreader.java.commons.util.Displayer;
 import io.deepreader.java.commons.util.IOHandler;
 import io.deepreader.java.commons.util.Sorter;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -12,6 +13,7 @@ import rake4j.core.model.Document;
 import rake4j.core.model.Term;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -49,10 +51,11 @@ public class RakeAnalyzer extends Analyzer {
     /**
      * @param pLoc - the location of the file where the stopwords are
      */
-    public void loadStopWords(URI pLoc) {
+    public void loadStopWords(InputStream pLoc) {
         List<String> stops = new ArrayList<>();
         try {
-            List<String> lines = Files.readAllLines(Paths.get(pLoc), StandardCharsets.UTF_8);
+            // List<String> lines = Files.readAllLines(pLoc, StandardCharsets.UTF_8);
+            List<String> lines  = IOUtils.readLines(pLoc, StandardCharsets.UTF_8);
             for (String line : lines) {
                 line = line.trim();
                 if(line.charAt(0)!='#') {
@@ -384,7 +387,7 @@ public class RakeAnalyzer extends Analyzer {
      * called after loading, just before run
      */
     public void init() throws URISyntaxException {
-        this.loadStopWords(this.getClass().getResource("/SmartStopListEn.txt").toURI());
+        this.loadStopWords(this.getClass().getClassLoader().getResourceAsStream("SmartStopListEn.txt"));
         
         if (stopWordList.isEmpty()) {
             logger.error("The method " + this.getName() + " requires a StopWordList to build the candidate list");
